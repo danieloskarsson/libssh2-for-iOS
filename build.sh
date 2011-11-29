@@ -19,6 +19,6 @@
 #  limitations under the License.
 #
 echo "Building openssl:"
-./build-libssl.sh
+./libssl.sh
 echo "Build libssh2:"
-./build-libssh2.sh openssl
+./libssh2.sh openssl
