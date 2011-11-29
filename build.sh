@@ -18,20 +18,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
-if [ "$1" == "openssl" ];
-then
-	echo "Building openssl:"
-	./build-libssl.sh
-	echo "Build libssh2:"
-	./build-libssh2.sh openssl
-elif [ "$1" == "libgcrypt" ];
-then
-	echo "Build libgpg-error:"
-	./build-libgpg-error.sh
-	echo "Build libgcrypt:"
-	./build-libgcrypt.sh
-	echo "Build libssh2:"
-	./build-libssh2.sh libgcrypt
-else
-	echo "Usage: ./build-all.sh openssl | libgcrypt"
-fi
+echo "Building openssl:"
+./build-libssl.sh
+echo "Build libssh2:"
+./build-libssh2.sh openssl
