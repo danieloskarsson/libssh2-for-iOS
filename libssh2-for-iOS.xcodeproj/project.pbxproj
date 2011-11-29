@@ -16,8 +16,6 @@
 		2A5385E512F8A890007E067A /* SSHWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A5385E412F8A890007E067A /* SSHWrapper.m */; };
 		2AB446D812F8A424006B0090 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 2AB446D712F8A424006B0090 /* Icon.png */; };
 		2AB446EA12F8A588006B0090 /* libcrypto.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AB446E512F8A588006B0090 /* libcrypto.a */; };
-		2AB446EB12F8A588006B0090 /* libgcrypt.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AB446E612F8A588006B0090 /* libgcrypt.a */; };
-		2AB446EC12F8A588006B0090 /* libgpg-error.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AB446E712F8A588006B0090 /* libgpg-error.a */; };
 		2AB446ED12F8A588006B0090 /* libssh2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AB446E812F8A588006B0090 /* libssh2.a */; };
 		2AB446EE12F8A588006B0090 /* libssl.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AB446E912F8A588006B0090 /* libssl.a */; };
 		2AB4470112F8A5B5006B0090 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2AB4470012F8A5B5006B0090 /* libz.dylib */; };
@@ -36,8 +34,6 @@
 		2A5385E412F8A890007E067A /* SSHWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSHWrapper.m; sourceTree = "<group>"; };
 		2AB446D712F8A424006B0090 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Icon.png; path = Ressources/Icon.png; sourceTree = "<group>"; };
 		2AB446E512F8A588006B0090 /* libcrypto.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libcrypto.a; path = lib/libcrypto.a; sourceTree = "<group>"; };
-		2AB446E612F8A588006B0090 /* libgcrypt.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libgcrypt.a; path = lib/libgcrypt.a; sourceTree = "<group>"; };
-		2AB446E712F8A588006B0090 /* libgpg-error.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libgpg-error.a"; path = "lib/libgpg-error.a"; sourceTree = "<group>"; };
 		2AB446E812F8A588006B0090 /* libssh2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssh2.a; path = lib/libssh2.a; sourceTree = "<group>"; };
 		2AB446E912F8A588006B0090 /* libssl.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libssl.a; path = lib/libssl.a; sourceTree = "<group>"; };
 		2AB446F312F8A5A3006B0090 /* libssh2_for_iOS-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "libssh2_for_iOS-Info.plist"; sourceTree = "<group>"; };
@@ -54,8 +50,6 @@
 				1DF5F4E00D08C38300B7A737 /* UIKit.framework in Frameworks */,
 				288765FD0DF74451002DB57D /* CoreGraphics.framework in Frameworks */,
 				2AB446EA12F8A588006B0090 /* libcrypto.a in Frameworks */,
-				2AB446EB12F8A588006B0090 /* libgcrypt.a in Frameworks */,
-				2AB446EC12F8A588006B0090 /* libgpg-error.a in Frameworks */,
 				2AB446ED12F8A588006B0090 /* libssh2.a in Frameworks */,
 				2AB446EE12F8A588006B0090 /* libssl.a in Frameworks */,
 				2AB4470112F8A5B5006B0090 /* libz.dylib in Frameworks */,
@@ -119,8 +113,6 @@
 			isa = PBXGroup;
 			children = (
 				2AB446E512F8A588006B0090 /* libcrypto.a */,
-				2AB446E612F8A588006B0090 /* libgcrypt.a */,
-				2AB446E712F8A588006B0090 /* libgpg-error.a */,
 				2AB446E812F8A588006B0090 /* libssh2.a */,
 				2AB446E912F8A588006B0090 /* libssl.a */,
 				1DF5F4DF0D08C38300B7A737 /* UIKit.framework */,
