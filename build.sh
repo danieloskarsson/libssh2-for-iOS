@@ -18,7 +18,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 #
+
 echo "Building openssl:"
 ./libssl.sh
-echo "Build libssh2:"
-./libssh2.sh openssl
+echo "Build libssh2 with openssl:"
+./libssh2.sh

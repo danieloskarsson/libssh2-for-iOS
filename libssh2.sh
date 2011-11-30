@@ -31,6 +31,14 @@ CURRENTPATH=`pwd`
 ARCHS="i386 armv6 armv7"
 
 ##########
+# cpp is missing at least on my Mac mini purchased in Nov 2011 with Xcode installed from the Mac App Store
+export CPP_SIMULATOR="/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/bin/cpp"
+export CPP_OS="/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cpp"
+if [-e CPP_OS]
+then
+ln -s ${CPP_SIMULATOR} ${CPP_OS}
+fi
+
 set -e
 if [ ! -e libssh2-${VERSION}.tar.gz ]; then
 	echo "Downloading libssh2-${VERSION}.tar.gz"
@@ -76,12 +84,7 @@ do
 	LOG="${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk/build-libssh2-${VERSION}.log"
 	echo ${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk
 	
-	if [ $1 == "openssl" ];
-	then
-		./configure --host=${ARCH}-apple-darwin --prefix="${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk" -with-openssl --with-libssl-prefix=${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk --disable-shared --enable-static  >> "${LOG}" 2>&1
-	else
-		./configure --host=${ARCH}-apple-darwin --prefix="${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk" --with-libgcrypt --with-libgcrypt-prefix=${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk --disable-shared --enable-static  >> "${LOG}" 2>&1
-	fi
+    ./configure --host=${ARCH}-apple-darwin --prefix="${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk" -with-openssl --with-libssl-prefix=${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk --disable-shared --enable-static  >> "${LOG}" 2>&1
 	
 	make >> "${LOG}" 2>&1
 	make install >> "${LOG}" 2>&1
