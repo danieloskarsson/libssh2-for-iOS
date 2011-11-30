@@ -34,9 +34,10 @@ ARCHS="i386 armv6 armv7"
 # cpp is missing at least on my Mac mini purchased in Nov 2011 with Xcode installed from the Mac App Store
 export CPP_SIMULATOR="/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/bin/cpp"
 export CPP_OS="/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/cpp"
-if [-e CPP_OS]
+if [ ! -e ${CPP_OS} ]
 then
-ln -s ${CPP_SIMULATOR} ${CPP_OS}
+    ln -s ${CPP_SIMULATOR} ${CPP_OS}
+    echo "Executed ln -s ${CPP_SIMULATOR} ${CPP_OS}"
 fi
 
 set -e
@@ -82,7 +83,6 @@ do
 	mkdir -p "${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk"
 
 	LOG="${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk/build-libssh2-${VERSION}.log"
-	echo ${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk
 	
     ./configure --host=${ARCH}-apple-darwin --prefix="${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk" -with-openssl --with-libssl-prefix=${CURRENTPATH}/bin/${PLATFORM}${SDKVERSION}-${ARCH}.sdk --disable-shared --enable-static  >> "${LOG}" 2>&1
 	
