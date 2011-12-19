@@ -26,6 +26,8 @@
 @synthesize window;
 @synthesize textField, textView, ipField, userField, passwordField;
 
+@synthesize portForwardButton;
+
 #pragma mark -
 #pragma mark Application lifecycle
 
@@ -36,11 +38,43 @@
     return YES;
 }
 
+- (IBAction)portForward:(id)sender {
+    if (sshPortForwardWrapper == nil) {
+        sshPortForwardWrapper = [[SSHWrapper alloc] init];
+        [sshPortForwardWrapper connectToHost:ipField.text port:22 user:userField.text password:passwordField.text];
+        
+        unsigned int localPort = 5610;
+        unsigned int remotePort = 80;
+        NSString *remoteIp = @"192.0.32.8";
+        
+        textView.text = [NSString stringWithFormat:@"Port forward set from port %d to host %@ on port %d", localPort, remoteIp, remotePort];
+        [self.portForwardButton setTitle:@"Disable Port Forward" forState:UIControlStateNormal];
+        [sshPortForwardWrapper setPortForwardFromPort:localPort toHost:remoteIp onPort:remotePort];
+        
+//        dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+//        dispatch_async(queue, ^{
+//        });        
+    } else {
+        [sshPortForwardWrapper closeConnection];
+        [sshPortForwardWrapper release];
+        sshPortForwardWrapper = nil;
+        textView.text = @"Port forward closed";
+        [self.portForwardButton setTitle:@"Enable Port Forward" forState:UIControlStateNormal];
+    }
+    
+	[textField resignFirstResponder];
+	[ipField resignFirstResponder];
+	[userField resignFirstResponder];
+	[passwordField resignFirstResponder];
+}
+
 - (IBAction)executeCommand:(id)sender {
 	SSHWrapper *sshWrapper = [[SSHWrapper alloc] init];
+    //NSString *ip = [SSHWrapper dnsNameToIp:ipField.text];
 	[sshWrapper connectToHost:ipField.text port:22 user:userField.text password:passwordField.text];
 
 	textView.text = [sshWrapper executeCommand:textField.text];
+    NSLog(@"%@", textView.text);
     [sshWrapper closeConnection];
 	[sshWrapper release];
 	
@@ -50,14 +84,6 @@
 	[passwordField resignFirstResponder];
 
 }
-
-
-- (IBAction)showInfo {
-	UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"libssh2-for-iOS" message:@"libssh2-Version: 1.2.8\nlibgcrypt-Version: 1.4.6\nlibgpg-error-Version: 1.10\nopenssl-Version: 1.0.0c\n\nLicense: See include/*/LICENSE\n\nCopyright 2011 by Felix Schulze\n http://www.x2on.de" delegate:nil cancelButtonTitle:@"Close" otherButtonTitles:nil];
-	[alert show];
-	[alert release];
-}
-
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     /*

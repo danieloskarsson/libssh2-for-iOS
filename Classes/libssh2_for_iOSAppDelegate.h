@@ -18,6 +18,7 @@
 //  limitations under the License.
 
 #import <UIKit/UIKit.h>
+#import "SSHWrapper.h"
 
 @interface libssh2_for_iOSAppDelegate : NSObject <UIApplicationDelegate> {
     UIWindow *window;
@@ -27,6 +28,9 @@
 	IBOutlet UITextField *userField;
 	IBOutlet UITextField *passwordField;
 	IBOutlet UITextView *textView;
+    
+    IBOutlet UIButton *portForwardButton;
+    SSHWrapper *sshPortForwardWrapper;
 }
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
@@ -36,7 +40,8 @@
 @property (nonatomic, retain) IBOutlet UITextField *passwordField;
 @property (nonatomic, retain) IBOutlet UITextView *textView;
 
-- (IBAction)showInfo;
-- (IBAction)executeCommand:(id)sender;
-@end
+@property (nonatomic, retain) IBOutlet UIButton *portForwardButton;
 
+//- (IBAction)executeCommand:(id)sender;
+
+@end

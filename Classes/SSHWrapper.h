@@ -26,6 +26,7 @@
 
 -(int) connectToHost:(NSString *)host port:(int)port user:(NSString *)user password:(NSString *)password;
 -(int) closeConnection;
--(NSString *)executeCommand:(NSString *)command;
-
+-(NSString*)executeCommand:(NSString*)command;
+-(void) setPortForwardFromPort:(unsigned int)localPort toHost:(NSString*)remoteHost onPort:(unsigned int)remotePort; 
+    
 @end

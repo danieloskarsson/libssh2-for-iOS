@@ -65,6 +65,23 @@ static int waitsocket(int socket_fd, LIBSSH2_SESSION *session)
     return rc;
 }
 
+char *passwordFunc(const char *s)
+{
+    static char *pw = NULL;
+    if (strlen(s)) {
+        pw = s;
+    } 
+    return pw;
+}
+
+void keyboard_interactive(const char *name, int name_len, const char *instr, int instr_len, 
+                          int num_prompts, const LIBSSH2_USERAUTH_KBDINT_PROMPT *prompts, LIBSSH2_USERAUTH_KBDINT_RESPONSE *res, 
+                          void **abstract)
+{
+    res[0].text = strdup(passwordFunc(""));
+    res[0].length = strlen(passwordFunc(""));
+}
+
 @implementation SSHWrapper
 
 -(int) connectToHost:(NSString *)host port:(int)port user:(NSString *)user password:(NSString *)password {
@@ -72,6 +89,12 @@ static int waitsocket(int socket_fd, LIBSSH2_SESSION *session)
 	const char* userChar = [user cStringUsingEncoding:NSUTF8StringEncoding];
 	const char* passwordChar = [password cStringUsingEncoding:NSUTF8StringEncoding];
 
+    char *userAuthList;
+    const char *fingerprint;
+    int i, auth_pw = 0;
+    
+    (void) passwordFunc(passwordChar); /* save for future use */
+    
     hostaddr = inet_addr(hostChar);
     sock = socket(AF_INET, SOCK_STREAM, 0);
     soin.sin_family = AF_INET;
@@ -100,15 +123,208 @@ static int waitsocket(int socket_fd, LIBSSH2_SESSION *session)
         return -1;
     }
 
-    if ( strlen(passwordChar) != 0 ) {
-		/* We could authenticate via password */
-        while ((rc = libssh2_userauth_password(session, userChar, passwordChar)) == LIBSSH2_ERROR_EAGAIN);
-		if (rc) {
-			fprintf(stderr, "Authentication by password failed.\n");
-			return 1;
-		}
-	}
+    fingerprint = libssh2_hostkey_hash(session, LIBSSH2_HOSTKEY_HASH_MD5);
+    
+    // XXX track this, display in an alert if we've not seen it before
+    printf("Fingerprint: ");
+    for(i = 0; i < 16; i++) {
+        printf("%02X:", (unsigned char)fingerprint[i]);
+    }
+    printf("\n");
+    
+    libssh2_session_set_blocking(session, 1);
+    userAuthList = libssh2_userauth_list(session, userChar, strlen(userChar)); 
+    
+    printf("%s", userAuthList);
+    
+    if (strstr(userAuthList, "password") != NULL) {
+        auth_pw |= 1;
+    }
+    if (strstr(userAuthList, "keyboard-interactive") != NULL) {
+        auth_pw |= 2;
+    }
+    if (strstr(userAuthList, "publickey") != NULL) {
+        auth_pw |= 4;
+    }
+    
+    if (auth_pw & 1) {
+        /* We can authenticate via password */
+        if (libssh2_userauth_password(session, userChar, passwordChar)) {
+            printf("\tAuthentication by password failed!\n");
+            return 1;
+        } else {
+            printf("\tAuthentication by password succeeded.\n");
+        }
+    } else if (auth_pw & 2) {
+        /* Or via keyboard-interactive */
+        if (libssh2_userauth_keyboard_interactive(session, userChar, &keyboard_interactive) ) {
+            printf("\tAuthentication by keyboard-interactive failed!\n");
+            return 1;
+        } else {
+            printf("\tAuthentication by keyboard-interactive succeeded.\n");
+        }
+    } else {
+        printf("No supported authentication methods found!\n");
+        return 1;
+    }
+    
+    libssh2_session_set_blocking(session, 0);    
 	return 0;
+}
+
+-(void) setPortForwardFromPort:(unsigned int)localPort toHost:(NSString*)remoteHost onPort:(unsigned int)remotePort {
+    const char *local_listenip = "0.0.0.0";
+    unsigned int local_listenport = localPort;
+//    const char *remote_desthost = "www.iana.org"; // resolved by the server
+    const char *remote_desthost = "192.0.32.8"; //  [remoteHost cStringUsingEncoding:NSUTF8StringEncoding];
+    unsigned int remote_destport = remotePort;        
+    NSLog(@"%s:%d -> %@:%d", local_listenip, localPort, remoteHost, remotePort);
+    
+    int listensock = -1;
+    listensock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    
+    struct sockaddr_in sin;
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(local_listenport);
+    
+    if (INADDR_NONE == (sin.sin_addr.s_addr = inet_addr(local_listenip))) {
+        perror("inet_addr");
+        close(listensock);
+        if (channel) libssh2_channel_free(channel);    
+    }
+    int sockopt = 1;
+    setsockopt(listensock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(sockopt));
+    socklen_t sinlen=sizeof(sin);
+    if (-1 == bind(listensock, (struct sockaddr *)&sin, sinlen)) {
+        perror("bind");
+        fprintf(stderr, "after-bind");
+        close(listensock);
+        if (channel) libssh2_channel_free(channel);    
+    }
+    if (-1 == listen(listensock, 2)) {
+        perror("listen");
+        close(listensock);
+        if (channel) libssh2_channel_free(channel);    
+    }
+    
+
+    libssh2_session_set_blocking(session, 1);
+    
+    printf("Waiting for TCP connection on %s:%d...\n",
+           inet_ntoa(sin.sin_addr), ntohs(sin.sin_port));
+    
+    int forwardsock = -1;
+    forwardsock = accept(listensock, (struct sockaddr *)&sin, &sinlen);
+    if (-1 == forwardsock) {
+        perror("accept");
+        close(forwardsock);
+        close(listensock);
+        if (channel) libssh2_channel_free(channel);    
+    }
+    
+    const char *shost;
+    unsigned int sport;    
+    shost = inet_ntoa(sin.sin_addr);
+    sport = ntohs(sin.sin_port);
+    
+    printf("Forwarding connection from %s:%d here to remote %s:%d\n", shost,
+           sport, remote_desthost, remote_destport);
+    
+    channel = libssh2_channel_direct_tcpip_ex(session, remote_desthost,
+                                              remote_destport, shost, sport);
+    if (!channel) {
+        fprintf(stderr, "Could not open the direct-tcpip channel!\n"
+                "(Note that this can be a problem at the server!"
+                " Please review the server logs.)\n");
+        close(forwardsock);
+        close(listensock);
+        if (channel) libssh2_channel_free(channel);    
+    }
+    
+    /* Must use non-blocking IO hereafter due to the current libssh2 API */
+    libssh2_session_set_blocking(session, 0);
+    
+    int rc, i;
+    fd_set fds;
+    struct timeval tv;
+    ssize_t len, wr;
+    char buf[16384];
+    
+    while (1) {
+        FD_ZERO(&fds);
+        FD_SET(forwardsock, &fds);
+        tv.tv_sec = 0;
+        tv.tv_usec = 100000;
+        rc = select(forwardsock + 1, &fds, NULL, NULL, &tv);
+        if (-1 == rc) {
+            perror("select");
+            close(forwardsock);
+            close(listensock);
+            if (channel) libssh2_channel_free(channel);    
+            return;
+        }
+        if (rc && FD_ISSET(forwardsock, &fds)) {
+            len = recv(forwardsock, buf, sizeof(buf), 0);
+            if (len < 0) {
+                perror("read");
+                close(forwardsock);
+                close(listensock);
+                if (channel) libssh2_channel_free(channel);    
+                return;
+            } else if (0 == len) {
+                printf("The client at %s:%d disconnected!\n", shost, sport);
+                close(forwardsock);
+                close(listensock);
+                if (channel) libssh2_channel_free(channel);    
+                return;
+            }
+            wr = 0;
+            do {
+                i = libssh2_channel_write(channel, buf, len);
+                if (i < 0) {
+                    fprintf(stderr, "libssh2_channel_write: %d\n", i);
+                    close(forwardsock);
+                    close(listensock);
+                    if (channel) libssh2_channel_free(channel);    
+                    return;
+                }
+                wr += i;
+            } while(i > 0 && wr < len);
+        }
+        while (1) {
+            len = libssh2_channel_read(channel, buf, sizeof(buf));
+            if (LIBSSH2_ERROR_EAGAIN == len)
+                break;
+            else if (len < 0) {
+                fprintf(stderr, "libssh2_channel_read: %d", (int)len);
+                close(forwardsock);
+                close(listensock);
+                if (channel) libssh2_channel_free(channel);    
+                return;
+            }
+            wr = 0;
+            while (wr < len) {
+                i = send(forwardsock, buf + wr, len - wr, 0);
+                if (i <= 0) {
+                    perror("write");
+                    close(forwardsock);
+                    close(listensock);
+                    if (channel) libssh2_channel_free(channel);    
+                    return;
+                }
+                wr += i;
+            }
+            if (libssh2_channel_eof(channel)) {
+                printf("The server at %s:%d disconnected!\n",
+                       remote_desthost, remote_destport);
+                close(forwardsock);
+                close(listensock);
+                if (channel) libssh2_channel_free(channel);    
+                return;
+            }
+        }
+    }
+    
 }
 
 -(NSString *)executeCommand:(NSString *)command {
@@ -169,7 +385,6 @@ static int waitsocket(int socket_fd, LIBSSH2_SESSION *session)
     return result;
 	
 }
-
 
 -(int) closeConnection {	
     libssh2_session_disconnect(session,"Normal Shutdown, Thank you for playing");
