@@ -84,7 +84,51 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
 
 @implementation SSHWrapper
 
+
+
+- (NSString*) resolveHost:(NSString*) hostname{
+    Boolean result;
+    CFHostRef hostRef;
+    NSArray *addresses;
+    NSString *resolvedHost = nil;
+    hostRef = CFHostCreateWithName(kCFAllocatorDefault, (CFStringRef)hostname);
+    if (hostRef) {
+        result = CFHostStartInfoResolution(hostRef, kCFHostAddresses, NULL); // pass an error instead of NULL here to find out why it failed
+        if (result == TRUE) {
+            addresses = (NSArray*)CFHostGetAddressing(hostRef, &result);
+        }
+    }
+    if (result == TRUE) {
+        NSMutableArray *tempDNS = [[NSMutableArray alloc] init];
+        for(int i = 0; i < CFArrayGetCount((CFArrayRef)addresses); i++){
+            struct sockaddr_in* remoteAddr;
+            CFDataRef saData = (CFDataRef)CFArrayGetValueAtIndex((CFArrayRef)addresses, i);
+            remoteAddr = (struct sockaddr_in*)CFDataGetBytePtr(saData);
+            
+            
+            
+            if(remoteAddr != NULL){
+                // Extract the ip address
+                //const char *strIP41 = inet_ntoa(remoteAddr->sin_addr);
+                NSString *strDNS =[NSString stringWithCString:inet_ntoa(remoteAddr->sin_addr) encoding:NSASCIIStringEncoding];
+                NSLog(@"RESOLVED %d:<%@>", i, strDNS);
+                [tempDNS addObject:strDNS];
+                
+                if (resolvedHost == nil) resolvedHost = [strDNS retain];
+            }
+        }
+        
+        
+    } else {
+        NSLog(@"Not resolved");
+    }
+    
+    return [resolvedHost autorelease];
+}
+
 -(int) connectToHost:(NSString *)host port:(int)port user:(NSString *)user password:(NSString *)password {
+    host = [self resolveHost:host];
+
 	const char* hostChar = [host cStringUsingEncoding:NSUTF8StringEncoding];
 	const char* userChar = [user cStringUsingEncoding:NSUTF8StringEncoding];
 	const char* passwordChar = [password cStringUsingEncoding:NSUTF8StringEncoding];
@@ -359,9 +403,10 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
         do
         {
             char buffer[0x2000];
-            rc1 = libssh2_channel_read( channel, buffer, sizeof(buffer) );
+            rc1 = libssh2_channel_read( channel, buffer, sizeof(buffer) -1 );
             if( rc1 > 0 )
             {
+                buffer[rc1] = '\0';
 				result = [NSString stringWithCString:buffer encoding:NSASCIIStringEncoding];
             }
         }
