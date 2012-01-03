@@ -20,7 +20,7 @@
 #import <UIKit/UIKit.h>
 #import "SSHWrapper.h"
 
-@interface libssh2_for_iOSAppDelegate : NSObject <UIApplicationDelegate> {
+@interface libssh2_for_iOSAppDelegate : NSObject <UIApplicationDelegate, UIGestureRecognizerDelegate> {
     UIWindow *window;
 	
 	IBOutlet UITextField *textField;

@@ -31,11 +31,23 @@
 #pragma mark -
 #pragma mark Application lifecycle
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {    
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
+	[tapRecognizer setNumberOfTapsRequired:1];
+	[tapRecognizer setDelegate:self];
+	[self.window addGestureRecognizer:tapRecognizer];
     
     [self.window makeKeyAndVisible];
-    
     return YES;
+}
+
+- (void)handleTap:(UITapGestureRecognizer *)sender {
+    NSLog(@"tap");
+    //if (sender.state == UIGestureRecognizerStateEnded) {}
+    [textField resignFirstResponder];
+	[ipField resignFirstResponder];
+	[userField resignFirstResponder];
+	[passwordField resignFirstResponder];
 }
 
 - (IBAction)portForward:(id)sender {
