@@ -30,7 +30,6 @@
 
 unsigned long hostaddr;
 int sock;
-struct sockaddr_in soin;
 LIBSSH2_SESSION *session;
 LIBSSH2_CHANNEL *channel;
 int rc;
@@ -97,6 +96,7 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
     
     hostaddr = inet_addr(hostChar);
     sock = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in soin;
     soin.sin_family = AF_INET;
     soin.sin_port = htons(port);
     soin.sin_addr.s_addr = hostaddr;
@@ -110,6 +110,9 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
     if (!session)
         return -1;
 	
+    
+    
+    
     /* tell libssh2 we want it all done non-blocking */
     libssh2_session_set_blocking(session, 0);
 	
@@ -176,12 +179,12 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
     const char *local_listenip = "0.0.0.0";
     unsigned int local_listenport = localPort;
 //    const char *remote_desthost = "www.iana.org"; // resolved by the server
-    const char *remote_desthost = "192.0.32.8"; //  [remoteHost cStringUsingEncoding:NSUTF8StringEncoding];
+    const char *remote_desthost = [remoteHost cStringUsingEncoding:NSUTF8StringEncoding]; // "192.0.32.8"
     unsigned int remote_destport = remotePort;        
-    NSLog(@"%s:%d -> %@:%d", local_listenip, localPort, remoteHost, remotePort);
     
-    int listensock = -1;
-    listensock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    NSLog(@"%s:%d -> %s:%d", local_listenip, local_listenport, remote_desthost, remote_destport);
+        
+    int listensock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     
     struct sockaddr_in sin;
     sin.sin_family = AF_INET;
@@ -190,7 +193,6 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
     if (INADDR_NONE == (sin.sin_addr.s_addr = inet_addr(local_listenip))) {
         perror("inet_addr");
         close(listensock);
-        if (channel) libssh2_channel_free(channel);    
     }
     int sockopt = 1;
     setsockopt(listensock, SOL_SOCKET, SO_REUSEADDR, &sockopt, sizeof(sockopt));
@@ -199,12 +201,10 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
         perror("bind");
         fprintf(stderr, "after-bind");
         close(listensock);
-        if (channel) libssh2_channel_free(channel);    
     }
     if (-1 == listen(listensock, 2)) {
         perror("listen");
         close(listensock);
-        if (channel) libssh2_channel_free(channel);    
     }
     
 
@@ -219,7 +219,6 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
         perror("accept");
         close(forwardsock);
         close(listensock);
-        if (channel) libssh2_channel_free(channel);    
     }
     
     const char *shost;
@@ -238,7 +237,8 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
                 " Please review the server logs.)\n");
         close(forwardsock);
         close(listensock);
-        if (channel) libssh2_channel_free(channel);    
+        if (channel) libssh2_channel_free(channel);
+        return;
     }
     
     /* Must use non-blocking IO hereafter due to the current libssh2 API */
@@ -323,6 +323,7 @@ void keyboard_interactive(const char *name, int name_len, const char *instr, int
                 return;
             }
         }
+        
     }
     
 }

@@ -24,66 +24,88 @@
 @implementation libssh2_for_iOSAppDelegate
 
 @synthesize window;
-@synthesize textField, textView, ipField, userField, passwordField;
 
-@synthesize portForwardButton;
+#pragma mark UIWebViewDelegate
+- (void)webViewDidFinishLoad:(UIWebView *)_webView {
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+}
 
-#pragma mark -
 #pragma mark Application lifecycle
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {    
-    
     [self.window makeKeyAndVisible];
-    
     return YES;
 }
 
-- (IBAction)portForward:(id)sender {
-    if (sshPortForwardWrapper == nil) {
-        sshPortForwardWrapper = [[SSHWrapper alloc] init];
-        [sshPortForwardWrapper connectToHost:ipField.text port:22 user:userField.text password:passwordField.text];
-        
-        unsigned int localPort = 5610;
-        unsigned int remotePort = 80;
-        NSString *remoteIp = @"192.0.32.8";
-        
-        textView.text = [NSString stringWithFormat:@"Port forward set from port %d to host %@ on port %d", localPort, remoteIp, remotePort];
-        [self.portForwardButton setTitle:@"Disable Port Forward" forState:UIControlStateNormal];
-        [sshPortForwardWrapper setPortForwardFromPort:localPort toHost:remoteIp onPort:remotePort];
-        
-//        dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-//        dispatch_async(queue, ^{
-//        });        
-    } else {
-        [sshPortForwardWrapper closeConnection];
-        [sshPortForwardWrapper release];
-        sshPortForwardWrapper = nil;
-        textView.text = @"Port forward closed";
-        [self.portForwardButton setTitle:@"Enable Port Forward" forState:UIControlStateNormal];
-    }
+- (IBAction)go:(id)sender {
+    NSURLCache *sharedCache = [[NSURLCache alloc] initWithMemoryCapacity:0 diskCapacity:0 diskPath:nil];
+    [NSURLCache setSharedURLCache:sharedCache];
+
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+    NSURL *url = [NSURL URLWithString: [NSString stringWithFormat:@"http://0.0.0.0:8080"]]; 
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+    NSURLResponse *response;
+    NSError *error;
+    NSData *responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:&error];
+    NSString *responseString = [[NSString alloc] initWithData:responseData encoding:NSUTF8StringEncoding];
     
+    [webview loadHTMLString:responseString baseURL:[NSURL URLWithString:@"http://www.iana.org"]];
+}
+
+- (IBAction)portForward:(id)sender {
 	[textField resignFirstResponder];
 	[ipField resignFirstResponder];
 	[userField resignFirstResponder];
 	[passwordField resignFirstResponder];
+    
+    executeButton.hidden = !executeButton.hidden;
+    webview.hidden = !webview.hidden;
+    webviewButton.hidden = !webviewButton.hidden;
+
+    unsigned int localPort = 8080;
+    unsigned int remotePort = 80;
+    NSString *remoteIp = @"192.0.32.8"; // www.iana.org
+    
+    if (webview.hidden == NO) {
+        textView.text = [NSString stringWithFormat:@"Port forward set from port %d to host %@ on port %d", localPort, remoteIp, remotePort];
+        [portForwardButton setTitle:@"Disable Port Forward" forState:UIControlStateNormal];
+    } else {
+        textView.text = @"Port forward closed";
+        [portForwardButton setTitle:@"Enable Port Forward" forState:UIControlStateNormal];
+    }
+    
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_async(queue, ^{
+        if (webview.hidden == NO) {
+            sshPortForwardWrapper = [[SSHWrapper alloc] init];
+            [sshPortForwardWrapper connectToHost:ipField.text port:22 user:userField.text password:passwordField.text];
+            [sshPortForwardWrapper setPortForwardFromPort:localPort toHost:remoteIp onPort:remotePort];
+        } else {
+            [sshPortForwardWrapper closeConnection];
+            [sshPortForwardWrapper release];
+            sshPortForwardWrapper = nil;
+        }    
+    });
 }
 
 - (IBAction)executeCommand:(id)sender {
-	SSHWrapper *sshWrapper = [[SSHWrapper alloc] init];
-    //NSString *ip = [SSHWrapper dnsNameToIp:ipField.text];
-	[sshWrapper connectToHost:ipField.text port:22 user:userField.text password:passwordField.text];
-
-	textView.text = [sshWrapper executeCommand:textField.text];
-    NSLog(@"%@", textView.text);
-    [sshWrapper closeConnection];
-	[sshWrapper release];
-	
 	[textField resignFirstResponder];
 	[ipField resignFirstResponder];
 	[userField resignFirstResponder];
 	[passwordField resignFirstResponder];
 
+	SSHWrapper *sshWrapper = [[SSHWrapper alloc] init];
+	[sshWrapper connectToHost:ipField.text port:22 user:userField.text password:passwordField.text];
+
+	textView.text = [sshWrapper executeCommand:textField.text];
+    [sshWrapper closeConnection];
+	[sshWrapper release];
 }
+
+
+
+
+
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     /*

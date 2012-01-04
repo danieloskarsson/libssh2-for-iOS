@@ -29,19 +29,14 @@
 	IBOutlet UITextField *passwordField;
 	IBOutlet UITextView *textView;
     
+    IBOutlet UIButton *executeButton;
     IBOutlet UIButton *portForwardButton;
     SSHWrapper *sshPortForwardWrapper;
+    
+    IBOutlet UIWebView *webview;
+    IBOutlet UIButton *webviewButton;
 }
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
-@property (nonatomic, retain) IBOutlet UITextField *textField;
-@property (nonatomic, retain) IBOutlet UITextField *ipField;
-@property (nonatomic, retain) IBOutlet UITextField *userField;
-@property (nonatomic, retain) IBOutlet UITextField *passwordField;
-@property (nonatomic, retain) IBOutlet UITextView *textView;
-
-@property (nonatomic, retain) IBOutlet UIButton *portForwardButton;
-
-//- (IBAction)executeCommand:(id)sender;
 
 @end
