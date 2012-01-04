@@ -18,7 +18,6 @@
 //  limitations under the License.
 
 #import "libssh2_for_iOSAppDelegate.h"
-
 #import "SSHWrapper.h"
 
 @implementation libssh2_for_iOSAppDelegate
@@ -32,9 +31,21 @@
 
 #pragma mark Application lifecycle
 
-- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {    
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
+	[tapRecognizer setNumberOfTapsRequired:1];
+	[tapRecognizer setDelegate:self];
+	[self.window addGestureRecognizer:tapRecognizer];
     [self.window makeKeyAndVisible];
     return YES;
+}
+
+- (void)handleTap:(UITapGestureRecognizer *)sender {
+    //if (sender.state == UIGestureRecognizerStateEnded) {}
+    [textField resignFirstResponder];
+	[hostField resignFirstResponder];
+	[userField resignFirstResponder];
+	[passwordField resignFirstResponder];
 }
 
 - (IBAction)go:(id)sender {
@@ -54,7 +65,7 @@
 
 - (IBAction)portForward:(id)sender {
 	[textField resignFirstResponder];
-	[ipField resignFirstResponder];
+	[hostField resignFirstResponder];
 	[userField resignFirstResponder];
 	[passwordField resignFirstResponder];
     
@@ -78,7 +89,7 @@
     dispatch_async(queue, ^{
         if (webview.hidden == NO) {
             sshPortForwardWrapper = [[SSHWrapper alloc] init];
-            [sshPortForwardWrapper connectToHost:ipField.text port:22 user:userField.text password:passwordField.text];
+            [sshPortForwardWrapper connectToHost:hostField.text port:22 user:userField.text password:passwordField.text];
             [sshPortForwardWrapper setPortForwardFromPort:localPort toHost:remoteIp onPort:remotePort];
         } else {
             [sshPortForwardWrapper closeConnection];
@@ -90,17 +101,25 @@
 
 - (IBAction)executeCommand:(id)sender {
 	[textField resignFirstResponder];
-	[ipField resignFirstResponder];
+	[hostField resignFirstResponder];
 	[userField resignFirstResponder];
 	[passwordField resignFirstResponder];
 
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
 	SSHWrapper *sshWrapper = [[SSHWrapper alloc] init];
-	[sshWrapper connectToHost:ipField.text port:22 user:userField.text password:passwordField.text];
+	[sshWrapper connectToHost:hostField.text port:22 user:userField.text password:passwordField.text];
 
 	textView.text = [sshWrapper executeCommand:textField.text];
     [sshWrapper closeConnection];
 	[sshWrapper release];
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
 }
+
+
+
+
+
+
 
 
 
@@ -143,10 +162,6 @@
      See also applicationDidEnterBackground:.
      */
 }
-
-
-#pragma mark -
-#pragma mark Memory management
 
 - (void)applicationDidReceiveMemoryWarning:(UIApplication *)application {
     /*

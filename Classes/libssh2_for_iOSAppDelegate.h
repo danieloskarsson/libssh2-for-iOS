@@ -20,21 +20,22 @@
 #import <UIKit/UIKit.h>
 #import "SSHWrapper.h"
 
-@interface libssh2_for_iOSAppDelegate : NSObject <UIApplicationDelegate> {
+@interface libssh2_for_iOSAppDelegate : NSObject <UIApplicationDelegate, UIGestureRecognizerDelegate> {
     UIWindow *window;
 	
 	IBOutlet UITextField *textField;
-	IBOutlet UITextField *ipField;
+	IBOutlet UITextField *hostField;
 	IBOutlet UITextField *userField;
 	IBOutlet UITextField *passwordField;
 	IBOutlet UITextView *textView;
     
     IBOutlet UIButton *executeButton;
-    IBOutlet UIButton *portForwardButton;
-    SSHWrapper *sshPortForwardWrapper;
-    
-    IBOutlet UIWebView *webview;
+    IBOutlet UIButton *portForwardButton;    
     IBOutlet UIButton *webviewButton;
+
+    IBOutlet UIWebView *webview;
+
+    SSHWrapper *sshPortForwardWrapper;
 }
 
 @property (nonatomic, retain) IBOutlet UIWindow *window;
